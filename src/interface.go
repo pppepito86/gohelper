@@ -5,43 +5,22 @@ import "io/ioutil"
 import "path"
 import "strings"
 import "os"
+import "strconv"
 
 func main()	{
-	blocks := getBlocks()
+	interfaceName := os.Args[1]
+	dir := os.Getenv("pesho")
+	if dir == "" {
+		dir = "."
+	}
+	
+	fmt.Println("Searching for interface: " + interfaceName + " in " + dir)
+	blocks := getBlocks(dir)
 	for _, block := range blocks {
-		if strings.HasPrefix(block[0], "func (") {
-			firstLine := ""
-			for i := 0; i < len(block); i++ {
-				firstLine += block[i]
-				diff := 0
-				ok := false
-				for j := 0; j < len(firstLine); j++ {
-					if firstLine[j] == '{' && diff == 0 {
-						firstLine = firstLine[:j]
-						ok = true
-						break
-					}
-					if firstLine[j] == '(' || firstLine[j] == '{' {
-						diff++;
-					}
-					if firstLine[j] == ')' || firstLine[j] == '}' {
-						diff--;
-					}
-				}
-				if ok {
-					break
-				}
-			}
-			//fmt.Println(firstLine)
-		//	t, s := parse(firstLine)
-	//		fmt.Println(t, s)
-		} else if strings.HasPrefix(block[0], "type") {
-			sp := strings.Split(block[0], " ")
-			if len(sp) < 3 || !strings.HasPrefix(sp[2], "interface") {
-				continue
-			}
-			if len(block) > 1 {
-				fmt.Println(block[1])
+		if strings.HasPrefix(strings.TrimSpace(block[2]), "type " + interfaceName + " interface") {
+			fmt.Println(block[0] + ": " + block[1])
+			for i:=2; i < len(block); i++ {
+				fmt.Println("   " + block[i])
 			}
 		}
 	}
@@ -128,12 +107,8 @@ func parseParam(param string, lastType string) string {
 	return ""
 }
 
-func getBlocks() [][]string {
+func getBlocks(dir string) [][]string {
 	blocks := make([][]string, 0)
-	dir := os.Getenv("pesho")
-	if dir == "" {
-		dir = "."
-	}
 	getDirBlocks(dir, &blocks)
 	return blocks
 }
@@ -159,14 +134,18 @@ func getFileBlocks(filename string, blocks *[][]string) [][]string {
 	b, _ := ioutil.ReadFile(filename)
 	s := strings.Split(string(b), "\n")
 	block := make([]string, 0)
+	block = append(block, filename)
+	block = append(block, "1")
 	diff := 0
-	for _, line := range s {
+	for idx, line := range s {
 		line = strings.TrimSpace(line)
 		block = append(block, line)
 		diff = updateDiff(&diff, line)
 		if diff == 0 {
 			*blocks = append(*blocks, block)
 			block = make([]string, 0)
+			block = append(block, filename)
+			block = append(block, strconv.Itoa(idx+2))
 		}
 	}
 	return *blocks
