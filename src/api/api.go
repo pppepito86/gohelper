@@ -39,13 +39,12 @@ func getParams(signature string) []string {
 
 func parseParam(param string, lastType string) string {
 	param = strings.TrimSpace(param)
-	p := strings.Split(param, " ")
+	p := strings.SplitN(param, " ", 2)
 	if len(p) == 1 {
 		return lastType
 	} else if len(p) == 2 {
-		return strings.TrimSpace(p[1])
-	} else if len(p) > 2 {
-		return "error"
+		s := strings.TrimSpace(p[1])
+		return strings.Replace(s, " ", "", -1)
 	}
 	return ""
 }

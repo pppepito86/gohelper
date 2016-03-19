@@ -32,5 +32,13 @@ func TestParseSignature() {
 	s = api.ParseSignature("testFunc(s string, a , b int, s, c ,d bool)")
 	checkS(fmt.Sprint(s), "[[testFunc] [string int int bool bool bool] []]")
 
+	s = api.ParseSignature("DoSomething(v interface{}) ")
+	checkS(fmt.Sprint(s), "[[DoSomething] [interface{}] []]")
+
+	s = api.ParseSignature("DoSomething(v interface { }, a int) ")
+	checkS(fmt.Sprint(s), "[[DoSomething] [interface{} int] []]")
+
+
+
 }
 
